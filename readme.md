@@ -13,6 +13,7 @@ Audio and visuals are implemented with SDL3.
 
 # Resources Used
 http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
+
 https://tobiasvl.github.io/blog/write-a-chip-8-emulator/
 
 ---
