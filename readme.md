@@ -2,23 +2,19 @@
 This is my chip8 emulator written in C. It has all opcodes for the original chip8 implemented.
 Audio and visuals are implemented with SDL3.
 
----
 
 ## Compiling
 ```bash
 	gcc src\main.c src\chip8.c -o main -L<SDL_LIB_DIR> -I<SDL_INCLUDES_DIR> -lSDL3
 ```
 
----
 
-# Resources Used
+## Resources Used
 http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
 
 https://tobiasvl.github.io/blog/write-a-chip-8-emulator/
 
----
-
-# Things I Learned
+## Things I Learned
 uint8_t over char:
 - char is not guaranteed to be 8 bits - 1 byte long whereas uint8_t is guaranteed
 - int8_t is the signed version
@@ -38,7 +34,8 @@ It's ok if ROM is looping:
 
 Underflow on max/min:
 - Subtract then took the min but what would not make 0 as it underflows to 255 before it could be detected:
-- ```c
-chip->delay_timer = max(0, chip->delay_timer - 1);
-  ```
+
+```c
+  chip->delay_timer = max(0, chip->delay_timer - 1);
+```
   
