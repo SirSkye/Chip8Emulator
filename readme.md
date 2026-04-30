@@ -8,12 +8,6 @@ Audio and visuals are implemented with SDL3.
 	gcc src\main.c src\chip8.c -o main -L<SDL_LIB_DIR> -I<SDL_INCLUDES_DIR> -lSDL3
 ```
 
-
-## Resources Used
-http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
-
-https://tobiasvl.github.io/blog/write-a-chip-8-emulator/
-
 ## Things I Learned
 uint8_t over char:
 - char is not guaranteed to be 8 bits - 1 byte long whereas uint8_t is guaranteed
@@ -40,3 +34,8 @@ Underflow on max/min:
 ```
 Timing issues:
 - There was a pesky bug where sometimes it would only render a part of what was supposed to rendered. Long story short, it was an issue with the draw_updt flag and the fact that I sometimes ran more than one emulation cycle per frame
+
+## Resources Used
+http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
+
+https://tobiasvl.github.io/blog/write-a-chip-8-emulator/
