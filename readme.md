@@ -38,4 +38,5 @@ Underflow on max/min:
 ```c
   chip->delay_timer = max(0, chip->delay_timer - 1);
 ```
-  
+Timing issues:
+- There was a pesky bug where sometimes it would only render a part of what was supposed to rendered. Long story short, it was an issue with the draw_updt flag and the fact that I sometimes ran more than one emulation cycle per frame
