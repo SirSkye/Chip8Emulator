@@ -28,11 +28,12 @@ static const uint8_t font_set[80] = {
 struct chip8 *chip8_create(void) {
     struct chip8 *chip = malloc(sizeof(struct chip8));
 
-    memcpy(&chip->memory[0x50], font_set, sizeof(font_set));
+    memset(chip->memory, 0, sizeof(chip->memory));
     memset(chip->display, 0, sizeof(chip->display));
     memset(chip->V, 0, sizeof(chip->V));
     memset(chip->stack, 0, sizeof(chip->stack));
     memset(chip->keyboard, 0, sizeof(chip->keyboard));
+    memcpy(&chip->memory[0x50], font_set, sizeof(font_set));
 
     chip->pc = 0x200;
     chip->sp = 0;
@@ -70,7 +71,6 @@ void chip8_emulate_cycle(struct chip8 *chip) {
     // FETCH
     uint16_t opcode = (chip->memory[chip->pc] << 8) | (chip->memory[chip->pc + 1]);
     chip->pc += 2;
-    chip->display_updt = false;
     printf("OPCODE: %X\n", opcode);
 
     // DECODE EXECUTE
@@ -143,55 +143,56 @@ void chip8_emulate_cycle(struct chip8 *chip) {
                     break;
                 // 8xy1 - OR Vx, Vy
                 case 0x0001:
+                    chip->V[0xF] = 0;
                     chip->V[(opcode & 0x0F00) >> 8] |= chip->V[(opcode & 0x00F0) >> 4];
                     break;
                 // 8xy2 - AND Vx, Vy
                 case 0x0002:
+                    chip->V[0xF] = 0;
                     chip->V[(opcode & 0x0F00) >> 8] &= chip->V[(opcode & 0x00F0) >> 4];
                     break;
                 // 8xy3 - XOR Vx, Vy
                 case 0x0003:
+                    chip->V[0xF] = 0;
                     chip->V[(opcode & 0x0F00) >> 8] ^= chip->V[(opcode & 0x00F0) >> 4];
                     break;
                 // 8xy4 - ADD Vx, Vy
                 case 0x0004:
-                    unsigned int result = chip->V[(opcode & 0x0F00) >> 8] + chip->V[(opcode & 0x00F0) >> 4];
-                    chip->V[(opcode & 0x0F00) >> 8] = result;
-                    chip->V[0xF] = (result > 0xFF);
+                    bool flag_result = ((chip->V[(opcode & 0x0F00) >> 8] + chip->V[(opcode & 0x00F0) >> 4]) > 0xFF);
+                    chip->V[(opcode & 0x0F00) >> 8] += chip->V[(opcode & 0x00F0) >> 4];
+                    chip->V[0xF] = flag_result;
                     break;
                 // 8xy5 - SUB Vx, Vy
                 case 0x0005:
-                    chip->V[0xF] = 0;
-                    if (chip->V[(opcode & 0x0F00) >> 8] >= chip->V[(opcode & 0x00F0) >> 4]) {
-                        chip->V[0xF] = 1;
-                    }
+                    flag_result = (chip->V[(opcode & 0x0F00) >> 8] >= chip->V[(opcode & 0x00F0) >> 4]);
                     chip->V[(opcode & 0x0F00) >> 8] -= chip->V[(opcode & 0x00F0) >> 4];
+                    chip->V[0xF] = flag_result;
                     break;
                 // 8xy6 - SHR Vx {, Vy}
                 case 0x0006:
-                    chip->V[0xF] = chip->V[(opcode & 0x0F00) >> 8] & 0x1;
+                    flag_result = chip->V[(opcode & 0x0F00) >> 8] & 0x1;
                     if (SHIFT_VX) {
                         chip->V[(opcode & 0x0F00) >> 8] = chip->V[(opcode & 0x0F00) >> 8] >> 1;
                     } else {
                         chip->V[(opcode & 0x0F00) >> 8] = chip->V[(opcode & 0x00F0) >> 4] >> 1;
                     }
+                    chip->V[0xF] = flag_result;
                     break;
                 // 8xy7 - SUBN Vx, Vy
                 case 0x0007:
-                    chip->V[0xF] = 0;
-                    if (chip->V[(opcode & 0x00F0) >> 4] >= chip->V[(opcode & 0x0F00) >> 8]) {
-                        chip->V[0xF] = 1;
-                    }
+                    flag_result = (chip->V[(opcode & 0x00F0) >> 4] >= chip->V[(opcode & 0x0F00) >> 8]);
                     chip->V[(opcode & 0x0F00) >> 8] = chip->V[(opcode & 0x00F0) >> 4] - chip->V[(opcode & 0x0F00) >> 8];
+                    chip->V[0xF] = flag_result;
                     break;
                 // 8xyE - SHL Vx {, Vy}
                 case 0x000E:
-                    chip->V[0xF] = chip->V[(opcode & 0x0F00) >> 8] >> 7;
+                    flag_result = chip->V[(opcode & 0x0F00) >> 8] >> 7;
                     if (SHIFT_VX) {
                         chip->V[(opcode & 0x0F00) >> 8] = chip->V[(opcode & 0x0F00) >> 8] << 1;
                     } else {
                         chip->V[(opcode & 0x0F00) >> 8] = chip->V[(opcode & 0x00F0) >> 4] << 1;
                     }
+                    chip->V[0xF] = flag_result;
                     break;
                 default:
                     printf("ERROR: Unknown Opcode: %X\n", opcode);
@@ -208,6 +209,10 @@ void chip8_emulate_cycle(struct chip8 *chip) {
         // Annn - LD I, addr
         case 0xA000:
             chip->I = opcode & 0x0FFF;
+            break;
+        // Bnnn - JP V0, addr
+        case 0xB000:
+            chip->pc = (opcode & 0x0FFF) + chip->V[(opcode & 0x0F00) >> 8];
             break;
         // Cxkk - RND Vx, byte
         case 0xC000:
@@ -300,6 +305,7 @@ void chip8_emulate_cycle(struct chip8 *chip) {
                     for (int i = 0; i <= x; i++) {
                         chip->memory[i + chip->I] = chip->V[i];
                     }
+                    chip->I += x;
                     break;
                 // Fx65 - LD Vx, [I]
                 case 0x0065:
@@ -307,6 +313,7 @@ void chip8_emulate_cycle(struct chip8 *chip) {
                     for (int i = 0; i <= x; i++) {
                         chip->V[i] = chip->memory[i + chip->I];
                     }
+                    chip->I += x;
                     break;
                 default:
                     printf("ERROR: Unknown Opcode %X\n", opcode);
