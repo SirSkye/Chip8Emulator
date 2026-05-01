@@ -1,7 +1,7 @@
 # Chip8 Emulator
 This is my chip8 emulator written in C. It has all opcodes for the original chip8 implemented.
 Audio and visuals are implemented with SDL3.
-
+![Chip8 Running](imgs/image.png)
 
 ## Compiling
 ```bash
