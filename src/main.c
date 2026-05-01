@@ -53,7 +53,7 @@ void SDLCALL audio_callback(void *userdata, SDL_AudioStream *stream, int additio
 
 int main(int argc, char *argv[]) {
     struct chip8 *chip = chip8_create();
-    if (chip8_load(chip, ".\\programs\\7-beep.ch8") != 0) {
+    if (chip8_load(chip, ".\\programs\\tetris.ch8") != 0) {
         printf("CLOSING");
         free(chip);
         exit(1);
